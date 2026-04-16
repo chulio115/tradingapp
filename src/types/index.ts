@@ -103,28 +103,18 @@ export interface ResearchCardData {
   quote: StockQuote | null;
   news: NewsItem[];
   historicalPrices: HistoricalPrice[];
-  insiderSentiment: InsiderSentiment | null;
-  socialSentiment: SocialSentiment | null;
+  sentiment: EODHDSentiment | null;
   congressTrades: CongressTrade[];
   aiAnalysis?: string;
 }
 
-export interface InsiderSentiment {
+export interface EODHDSentiment {
   symbol: string;
-  mspr: number;
-  msprChange: number;
-  positiveChange: number;
-  negativeChange: number;
-}
-
-export interface SocialSentiment {
-  symbol: string;
-  redditMentions: number;
-  twitterMentions: number;
-  redditPositiveMention: number;
-  redditNegativeMention: number;
-  twitterPositiveMention: number;
-  twitterNegativeMention: number;
+  avgSentiment: number;
+  latestSentiment: number;
+  latestDate: string;
+  totalMentions: number;
+  dataPoints: number;
 }
 
 export interface CongressTradeConditions {

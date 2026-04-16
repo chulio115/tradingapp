@@ -7,7 +7,6 @@ import {
   Brain,
   Loader2,
   Newspaper,
-  Users,
   MessageCircle,
   Landmark,
 } from "lucide-react";
@@ -152,50 +151,25 @@ export default function ResearchCard({ ticker, tradeContext }: ResearchCardProps
           </div>
         )}
 
-        {/* Insider Sentiment */}
-        {data.insiderSentiment && (
+        {/* Sentiment (EODHD) */}
+        {data.sentiment && (
           <div>
             <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
-              <Users className="h-3 w-3" /> Insider Sentiment (MSPR)
+              <MessageCircle className="h-3 w-3" /> Sentiment (30 Tage)
             </h4>
             <div className="flex items-center gap-3 text-sm">
               <span
                 className={
-                  data.insiderSentiment.mspr >= 0
+                  data.sentiment.avgSentiment >= 0
                     ? "text-emerald-500"
                     : "text-red-500"
                 }
               >
-                {data.insiderSentiment.mspr.toFixed(4)}
+                {data.sentiment.avgSentiment > 0 ? "+" : ""}
+                {data.sentiment.avgSentiment.toFixed(3)}
               </span>
               <span className="text-xs text-muted-foreground">
-                Positive: {data.insiderSentiment.positiveChange.toFixed(0)} |
-                Negative: {data.insiderSentiment.negativeChange.toFixed(0)}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Social Sentiment */}
-        {data.socialSentiment && (
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
-              <MessageCircle className="h-3 w-3" /> Social Sentiment (7 Tage)
-            </h4>
-            <div className="flex gap-4 text-xs">
-              <span>
-                Reddit: {data.socialSentiment.redditMentions} mentions (
-                <span className="text-emerald-500">
-                  {data.socialSentiment.redditPositiveMention}+
-                </span>{" "}
-                /{" "}
-                <span className="text-red-500">
-                  {data.socialSentiment.redditNegativeMention}-
-                </span>
-                )
-              </span>
-              <span>
-                Twitter: {data.socialSentiment.twitterMentions} mentions
+                {data.sentiment.totalMentions} Mentions · {data.sentiment.dataPoints} Tage
               </span>
             </div>
           </div>

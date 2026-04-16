@@ -1,25 +1,24 @@
 import type { ResearchCardData, NewsItem } from "@/types";
 import * as fmp from "./fmp";
-import * as finnhub from "./finnhub";
+import * as eodhd from "./eodhd";
 import { prisma } from "./db";
 
 export async function getResearchData(
   ticker: string
 ): Promise<ResearchCardData> {
-  const [profile, quote, fmpNews, finnhubNews, historicalPrices, insiderSentiment, socialSentiment] =
+  const [profile, quote, fmpNews, eodhdNews, historicalPrices, sentiment] =
     await Promise.allSettled([
       fmp.getCompanyProfile(ticker),
       fmp.getStockQuote(ticker),
       fmp.getCompanyNews(ticker, 5),
-      finnhub.getCompanyNews(ticker, 7),
+      eodhd.getCompanyNews(ticker, 10),
       fmp.getHistoricalPrices(ticker, 30),
-      finnhub.getInsiderSentiment(ticker),
-      finnhub.getSocialSentiment(ticker),
+      eodhd.getSentiment(ticker, 30),
     ]);
 
   const allNews = deduplicateNews([
     ...(fmpNews.status === "fulfilled" ? fmpNews.value : []),
-    ...(finnhubNews.status === "fulfilled" ? finnhubNews.value : []),
+    ...(eodhdNews.status === "fulfilled" ? eodhdNews.value : []),
   ]);
 
   const congressTrades = await prisma.congressTrade.findMany({
@@ -41,11 +40,9 @@ export async function getResearchData(
     news: allNews.slice(0, 10),
     historicalPrices:
       historicalPrices.status === "fulfilled" ? historicalPrices.value : [],
-    insiderSentiment:
-      insiderSentiment.status === "fulfilled" ? insiderSentiment.value : null,
-    socialSentiment:
-      socialSentiment.status === "fulfilled" ? socialSentiment.value : null,
-    congressTrades: serializedTrades,
+    sentiment:
+      sentiment.status === "fulfilled" ? sentiment.value : null,
+    congressTrades: serializedTrades as ResearchCardData["congressTrades"],
   };
 }
 
@@ -121,13 +118,9 @@ function buildAnalysisPrompt(
     ? `Sektor: ${data.profile.sector}, Branche: ${data.profile.industry}, MarketCap: $${(data.profile.mktCap / 1e9).toFixed(2)}B`
     : "Profildaten nicht verfuegbar";
 
-  const sentimentInfo = data.insiderSentiment
-    ? `MSPR Score: ${data.insiderSentiment.mspr.toFixed(4)}, Positive: ${data.insiderSentiment.positiveChange}, Negative: ${data.insiderSentiment.negativeChange}`
-    : "Insider Sentiment nicht verfuegbar";
-
-  const socialInfo = data.socialSentiment
-    ? `Reddit Mentions: ${data.socialSentiment.redditMentions} (${data.socialSentiment.redditPositiveMention} positiv), Twitter Mentions: ${data.socialSentiment.twitterMentions}`
-    : "Social Sentiment nicht verfuegbar";
+  const sentimentInfo = data.sentiment
+    ? `Sentiment Score: ${data.sentiment.avgSentiment.toFixed(3)} (${data.sentiment.totalMentions} Mentions, ${data.sentiment.dataPoints} Datenpunkte, letzter Wert: ${data.sentiment.latestSentiment.toFixed(3)} am ${data.sentiment.latestDate})`
+    : "Sentiment nicht verfuegbar";
 
   const congressInfo =
     data.congressTrades.length > 0
@@ -149,7 +142,6 @@ ${newsSummary || "Keine aktuellen News"}
 ${priceInfo}
 ${profileInfo}
 ${sentimentInfo}
-${socialInfo}
 
 Congressional Trades:
 ${congressInfo}
