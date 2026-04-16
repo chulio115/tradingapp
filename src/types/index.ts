@@ -1,0 +1,186 @@
+export interface CongressTrade {
+  id: string;
+  chamber: "senate" | "house";
+  politician: string;
+  party: string;
+  state: string | null;
+  ticker: string;
+  companyName: string | null;
+  transactionType: string;
+  amount: string;
+  transactionDate: string;
+  filingDate: string;
+  assetType: string | null;
+  createdAt: string;
+}
+
+export interface MarketMover {
+  id: string;
+  date: string;
+  ticker: string;
+  companyName: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number | null;
+  type: "gainer" | "loser";
+  createdAt: string;
+}
+
+export interface NewsItem {
+  id: string;
+  ticker: string;
+  title: string;
+  url: string;
+  source: string | null;
+  publishedAt: string;
+  summary: string | null;
+  sentiment: number | null;
+}
+
+export interface AlertRule {
+  id: string;
+  name: string;
+  type: "congress_trade" | "market_mover" | "ticker_watch";
+  conditions: string;
+  channel: "telegram" | "email";
+  active: boolean;
+  createdAt: string;
+}
+
+export interface AlertLog {
+  id: string;
+  ruleId: string;
+  message: string;
+  sentAt: string;
+  success: boolean;
+}
+
+export interface CompanyProfile {
+  symbol: string;
+  companyName: string;
+  sector: string;
+  industry: string;
+  mktCap: number;
+  description: string;
+  website: string;
+  image: string;
+  exchange: string;
+  ceo: string;
+  country: string;
+  fullTimeEmployees: string;
+}
+
+export interface StockQuote {
+  symbol: string;
+  name: string;
+  price: number;
+  changesPercentage: number;
+  change: number;
+  dayLow: number;
+  dayHigh: number;
+  yearHigh: number;
+  yearLow: number;
+  marketCap: number;
+  volume: number;
+  avgVolume: number;
+  open: number;
+  previousClose: number;
+  timestamp: number;
+}
+
+export interface HistoricalPrice {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface ResearchCardData {
+  profile: CompanyProfile | null;
+  quote: StockQuote | null;
+  news: NewsItem[];
+  historicalPrices: HistoricalPrice[];
+  insiderSentiment: InsiderSentiment | null;
+  socialSentiment: SocialSentiment | null;
+  congressTrades: CongressTrade[];
+  aiAnalysis?: string;
+}
+
+export interface InsiderSentiment {
+  symbol: string;
+  mspr: number;
+  msprChange: number;
+  positiveChange: number;
+  negativeChange: number;
+}
+
+export interface SocialSentiment {
+  symbol: string;
+  redditMentions: number;
+  twitterMentions: number;
+  redditPositiveMention: number;
+  redditNegativeMention: number;
+  twitterPositiveMention: number;
+  twitterNegativeMention: number;
+}
+
+export interface CongressTradeConditions {
+  minAmount?: string;
+  transactionType?: string;
+  politicians?: string[];
+  tickers?: string[];
+}
+
+export interface MarketMoverConditions {
+  minChangePercent?: number;
+  direction?: "up" | "down" | "both";
+}
+
+export interface TickerWatchConditions {
+  tickers: string[];
+}
+
+export interface FMPSenateTrade {
+  firstName: string;
+  lastName: string;
+  office: string;
+  link: string;
+  dateRecieved: string;
+  transactionDate: string;
+  owner: string;
+  assetDescription: string;
+  assetType: string;
+  type: string;
+  amount: string;
+  comment: string;
+  senator: string;
+  ticker?: string;
+}
+
+export interface FMPHouseTrade {
+  firstName: string;
+  lastName: string;
+  office: string;
+  link: string;
+  dateRecieved: string;
+  transactionDate: string;
+  owner: string;
+  assetDescription: string;
+  type: string;
+  amount: string;
+  representative: string;
+  district: string;
+  ticker?: string;
+  capitalGainsOver200USD: string;
+}
+
+export interface FMPMover {
+  symbol: string;
+  name: string;
+  change: number;
+  price: number;
+  changesPercentage: number;
+}
