@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   description:
     "Track US Congressional stock trades, market movers, and get AI-powered research insights.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

@@ -5,9 +5,10 @@ import { Bell, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import AlertRuleForm from "@/components/AlertRuleForm";
+import AuthWrapper from "@/components/AuthWrapper";
 import type { AlertRule } from "@/types";
 
-export default function AlertsPage() {
+function AlertsPageContent() {
   const [rules, setRules] = useState<AlertRule[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,5 +73,13 @@ export default function AlertsPage() {
         <AlertRuleForm rules={rules} onRulesChange={setRules} />
       )}
     </div>
+  );
+}
+
+export default function AlertsPage() {
+  return (
+    <AuthWrapper>
+      <AlertsPageContent />
+    </AuthWrapper>
   );
 }

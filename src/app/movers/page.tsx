@@ -5,9 +5,10 @@ import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import MoverCard from "@/components/MoverCard";
+import AuthWrapper from "@/components/AuthWrapper";
 import type { MarketMover } from "@/types";
 
-export default function MoversPage() {
+function MoversPageContent() {
   const [gainers, setGainers] = useState<MarketMover[]>([]);
   const [losers, setLosers] = useState<MarketMover[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,5 +118,13 @@ export default function MoversPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MoversPage() {
+  return (
+    <AuthWrapper>
+      <MoversPageContent />
+    </AuthWrapper>
   );
 }

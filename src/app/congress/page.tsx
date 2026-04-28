@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import TradeTable from "@/components/TradeTable";
+import AuthWrapper from "@/components/AuthWrapper";
 import type { CongressTrade } from "@/types";
 
-export default function CongressPage() {
+function CongressPageContent() {
   const [trades, setTrades] = useState<CongressTrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -130,5 +131,13 @@ export default function CongressPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CongressPage() {
+  return (
+    <AuthWrapper>
+      <CongressPageContent />
+    </AuthWrapper>
   );
 }

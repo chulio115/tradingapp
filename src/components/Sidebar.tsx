@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/app", label: "Overview", icon: LayoutDashboard },
   { href: "/congress", label: "Filings", icon: Landmark },
   { href: "/movers", label: "Market Movers", icon: TrendingUp },
   { href: "/alerts", label: "Alerts", icon: Bell },
