@@ -127,7 +127,7 @@ export default function ResearchCard({ ticker, tradeContext }: ResearchCardProps
             <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
               <TrendingUp className="h-3 w-3" /> 30-Tage Kursverlauf
             </h4>
-            <MiniChart data={data.historicalPrices} />
+            <MiniChart data={data.historicalPrices} currentPrice={data.quote?.price} />
           </div>
         )}
 

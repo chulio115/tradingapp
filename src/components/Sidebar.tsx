@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/congress", label: "Congress Trades", icon: Landmark },
+  { href: "/congress", label: "Filings", icon: Landmark },
   { href: "/movers", label: "Market Movers", icon: TrendingUp },
   { href: "/alerts", label: "Alerts", icon: Bell },
 ];
@@ -52,7 +52,7 @@ function NavContent({ pathname }: { pathname: string }) {
       </nav>
       <div className="px-4 py-4 border-t border-border">
         <p className="text-xs text-muted-foreground">
-          Data: FMP + Finnhub (Free Tier)
+          Data: Yahoo Finance + House Clerk
         </p>
       </div>
     </div>

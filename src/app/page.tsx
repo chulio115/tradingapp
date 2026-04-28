@@ -10,9 +10,11 @@ import {
   ArrowRight,
   Activity,
   BarChart3,
+  FileText,
+  ExternalLink,
+  MapPin,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CongressTrade, MarketMover, AlertRule } from "@/types";
@@ -153,7 +155,7 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Landmark className="h-4 w-4" />
-              Letzte Congressional Trades
+              Aktuelle Filings
             </CardTitle>
             <Link href="/congress">
               <Button variant="ghost" size="sm">
@@ -167,46 +169,40 @@ export default function DashboardPage() {
                 Noch keine Trades. Cron-Job ausfuehren um Daten zu laden.
               </p>
             )}
-            {data?.recentTrades.map((trade) => (
-              <div
-                key={trade.id}
-                className="flex items-center justify-between py-2 border-b border-border last:border-0"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <Badge
-                      variant="outline"
-                      className={
-                        trade.party === "D"
-                          ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                          : trade.party === "R"
-                            ? "bg-red-500/10 text-red-500 border-red-500/20"
-                            : "bg-gray-500/10 text-gray-400"
-                      }
-                    >
-                      {trade.party}
-                    </Badge>
+            {data?.recentTrades.map((trade) => {
+              const pdfUrl = trade.assetType?.startsWith("http") ? trade.assetType : null;
+              return (
+                <div
+                  key={trade.id}
+                  className="flex items-center justify-between py-2 border-b border-border last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 rounded-md bg-emerald-500/10">
+                      <FileText className="h-3.5 w-3.5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{trade.politician}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {trade.state && (
+                          <span className="flex items-center gap-0.5">
+                            <MapPin className="h-2.5 w-2.5" />
+                            {trade.state}
+                          </span>
+                        )}
+                        <span>
+                          {new Date(trade.filingDate).toLocaleDateString("de-DE")}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{trade.politician}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {trade.transactionType} ·{" "}
-                      {new Date(trade.transactionDate).toLocaleDateString(
-                        "de-DE"
-                      )}
-                    </p>
-                  </div>
+                  {pdfUrl && (
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-500 hover:text-emerald-400 flex items-center gap-1">
+                      PDF <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
                 </div>
-                <div className="text-right">
-                  <p className="font-mono text-sm font-medium text-emerald-500">
-                    {trade.ticker}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {trade.amount}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
 
