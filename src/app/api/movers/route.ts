@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Failed to fetch movers:", error);
-    return Response.json({ error: "Failed to fetch movers" }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return Response.json({ error: "Failed to fetch movers", detail: message }, { status: 500 });
   }
 }
