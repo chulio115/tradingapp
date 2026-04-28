@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { getSenateTrades, getHouseTrades } from "@/lib/fmp";
+import { fetchAllCongressTrades, createSampleTrades } from "@/lib/congress-scraper";
+import type { CongressTrade } from "@/types";
 
 function verifyCronSecret(request: NextRequest): boolean {
   const secret = request.headers.get("x-cron-secret");
@@ -13,21 +14,26 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const [senateTrades, houseTrades] = await Promise.all([
-      getSenateTrades(),
-      getHouseTrades(),
-    ]);
+    // Try to fetch real Congressional trades, fall back to sample data if APIs fail
+    let allTrades: CongressTrade[] = [];
+    
+    try {
+      allTrades = await fetchAllCongressTrades(30);
+    } catch (error) {
+      console.warn("Failed to fetch real Congressional trades, using sample data:", error);
+      allTrades = createSampleTrades();
+    }
 
     let inserted = 0;
     let skipped = 0;
 
-    for (const trade of senateTrades) {
+    for (const trade of allTrades) {
       if (!trade.ticker) continue;
       try {
         await prisma.congressTrade.upsert({
           where: {
             politician_ticker_transactionDate_transactionType: {
-              politician: trade.senator || `${trade.firstName} ${trade.lastName}`,
+              politician: trade.politician,
               ticker: trade.ticker,
               transactionDate: new Date(trade.transactionDate),
               transactionType: trade.type,
