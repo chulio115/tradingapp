@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,31 +10,25 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") ?? "1");
     const limit = parseInt(searchParams.get("limit") ?? "50");
 
-    const where: Record<string, unknown> = {};
-    if (chamber) where.chamber = chamber;
-    if (party) where.party = party;
-    if (ticker) where.ticker = { contains: ticker, mode: "insensitive" };
+    let query = supabase
+      .from("CongressTrade")
+      .select("*", { count: "exact" })
+      .order("filingDate", { ascending: false })
+      .range((page - 1) * limit, page * limit - 1);
 
-    const [trades, total] = await Promise.all([
-      prisma.congressTrade.findMany({
-        where,
-        orderBy: { filingDate: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.congressTrade.count({ where }),
-    ]);
+    if (chamber) query = query.eq("chamber", chamber);
+    if (party) query = query.eq("party", party);
+    if (ticker) query = query.ilike("ticker", `%${ticker}%`);
+
+    const { data: trades, count, error } = await query;
+
+    if (error) throw error;
 
     return Response.json({
-      trades: trades.map((t) => ({
-        ...t,
-        transactionDate: t.transactionDate.toISOString(),
-        filingDate: t.filingDate.toISOString(),
-        createdAt: t.createdAt.toISOString(),
-      })),
-      total,
+      trades: trades ?? [],
+      total: count ?? 0,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil((count ?? 0) / limit),
     });
   } catch (error) {
     console.error("Failed to fetch trades:", error);

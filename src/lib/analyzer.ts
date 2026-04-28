@@ -1,7 +1,7 @@
-import type { ResearchCardData, NewsItem } from "@/types";
+import type { ResearchCardData, NewsItem, CongressTrade } from "@/types";
 import * as yahoo from "./yahoo";
 import * as eodhd from "./eodhd";
-import { prisma } from "./db";
+import { supabase } from "./supabase";
 
 export async function getResearchData(
   ticker: string
@@ -19,18 +19,14 @@ export async function getResearchData(
     ...(eodhdNews.status === "fulfilled" ? eodhdNews.value : []),
   ]);
 
-  const congressTrades = await prisma.congressTrade.findMany({
-    where: { ticker },
-    orderBy: { transactionDate: "desc" },
-    take: 10,
-  });
+  const { data: congressTrades } = await supabase
+    .from("CongressTrade")
+    .select("*")
+    .ilike("ticker", `%${ticker}%`)
+    .order("transactionDate", { ascending: false })
+    .limit(10);
 
-  const serializedTrades = congressTrades.map((t) => ({
-    ...t,
-    transactionDate: t.transactionDate.toISOString(),
-    filingDate: t.filingDate.toISOString(),
-    createdAt: t.createdAt.toISOString(),
-  }));
+  const serializedTrades = (congressTrades ?? []) as CongressTrade[];
 
   return {
     profile: profile.status === "fulfilled" ? profile.value : null,

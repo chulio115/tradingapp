@@ -1,14 +1,15 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
   try {
-    const rules = await prisma.alertRule.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    return Response.json(
-      rules.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }))
-    );
+    const { data: rules, error } = await supabase
+      .from("AlertRule")
+      .select("*")
+      .order("createdAt", { ascending: false });
+
+    if (error) throw error;
+    return Response.json(rules ?? []);
   } catch (error) {
     console.error("Failed to fetch alert rules:", error);
     return Response.json({ error: "Failed to fetch alerts" }, { status: 500 });
@@ -25,14 +26,14 @@ export async function POST(request: NextRequest) {
       channel: string;
     };
 
-    const rule = await prisma.alertRule.create({
-      data: { name, type, conditions, channel },
-    });
+    const { data: rule, error } = await supabase
+      .from("AlertRule")
+      .insert({ name, type, conditions, channel })
+      .select()
+      .single();
 
-    return Response.json({
-      ...rule,
-      createdAt: rule.createdAt.toISOString(),
-    });
+    if (error) throw error;
+    return Response.json(rule);
   } catch (error) {
     console.error("Failed to create alert rule:", error);
     return Response.json(
@@ -47,15 +48,15 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { id, active } = body as { id: string; active: boolean };
 
-    const rule = await prisma.alertRule.update({
-      where: { id },
-      data: { active },
-    });
+    const { data: rule, error } = await supabase
+      .from("AlertRule")
+      .update({ active })
+      .eq("id", id)
+      .select()
+      .single();
 
-    return Response.json({
-      ...rule,
-      createdAt: rule.createdAt.toISOString(),
-    });
+    if (error) throw error;
+    return Response.json(rule);
   } catch (error) {
     console.error("Failed to update alert rule:", error);
     return Response.json(
@@ -70,7 +71,12 @@ export async function DELETE(request: NextRequest) {
     const body = await request.json();
     const { id } = body as { id: string };
 
-    await prisma.alertRule.delete({ where: { id } });
+    const { error } = await supabase
+      .from("AlertRule")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
     return Response.json({ success: true });
   } catch (error) {
     console.error("Failed to delete alert rule:", error);

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,27 +7,28 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const dateStr = searchParams.get("date");
 
-    const where: Record<string, unknown> = {};
-    if (type) where.type = type;
+    let query = supabase
+      .from("MarketMover")
+      .select("*")
+      .order("changePercent", { ascending: type === "loser" })
+      .limit(20);
+
+    if (type) query = query.eq("type", type);
     if (dateStr) {
       const date = new Date(dateStr);
       const nextDay = new Date(date);
       nextDay.setDate(nextDay.getDate() + 1);
-      where.date = { gte: date, lt: nextDay };
+      query = query.gte("date", date.toISOString()).lt("date", nextDay.toISOString());
     }
 
-    const movers = await prisma.marketMover.findMany({
-      where,
-      orderBy: { changePercent: type === "loser" ? "asc" : "desc" },
-      take: 20,
-    });
+    const { data: movers, error } = await query;
+
+    if (error) throw error;
 
     return Response.json({
-      movers: movers.map((m) => ({
+      movers: (movers ?? []).map((m) => ({
         ...m,
         volume: m.volume ? Number(m.volume) : null,
-        date: m.date.toISOString(),
-        createdAt: m.createdAt.toISOString(),
       })),
     });
   } catch (error) {
