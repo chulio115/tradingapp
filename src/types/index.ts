@@ -14,6 +14,17 @@ export interface CongressTrade {
   createdAt: string;
 }
 
+export interface CongressFiling {
+  politician: string;
+  chamber: "house";
+  state: string | null;
+  filingType: string;
+  filingDate: string;
+  year: number;
+  docId: string;
+  pdfUrl: string;
+}
+
 export interface MarketMover {
   id: string;
   date: string;
@@ -133,44 +144,3 @@ export interface TickerWatchConditions {
   tickers: string[];
 }
 
-export interface FMPSenateTrade {
-  firstName: string;
-  lastName: string;
-  office: string;
-  link: string;
-  dateRecieved: string;
-  transactionDate: string;
-  owner: string;
-  assetDescription: string;
-  assetType: string;
-  type: string;
-  amount: string;
-  comment: string;
-  senator: string;
-  ticker?: string;
-}
-
-export interface FMPHouseTrade {
-  firstName: string;
-  lastName: string;
-  office: string;
-  link: string;
-  dateRecieved: string;
-  transactionDate: string;
-  owner: string;
-  assetDescription: string;
-  type: string;
-  amount: string;
-  representative: string;
-  district: string;
-  ticker?: string;
-  capitalGainsOver200USD: string;
-}
-
-export interface FMPMover {
-  symbol: string;
-  name: string;
-  change: number;
-  price: number;
-  changesPercentage: number;
-}

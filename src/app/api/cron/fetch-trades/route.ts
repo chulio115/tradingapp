@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { fetchAllCongressTrades, createSampleTrades } from "@/lib/congress-scraper";
-import type { CongressTrade } from "@/types";
+import { fetchHouseFilings } from "@/lib/congress-scraper";
 
 function verifyCronSecret(request: NextRequest): boolean {
   const secret = request.headers.get("x-cron-secret");
@@ -14,81 +13,38 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Try to fetch real Congressional trades, fall back to sample data if APIs fail
-    let allTrades: CongressTrade[] = [];
-    
-    try {
-      allTrades = await fetchAllCongressTrades(30);
-    } catch (error) {
-      console.warn("Failed to fetch real Congressional trades, using sample data:", error);
-      allTrades = createSampleTrades();
-    }
+    const filings = await fetchHouseFilings();
 
     let inserted = 0;
     let skipped = 0;
 
-    for (const trade of allTrades) {
-      if (!trade.ticker) continue;
+    for (const filing of filings) {
       try {
+        // Store as a CongressTrade with filing metadata
+        // Since the XML only has filing info (not individual transactions),
+        // we store one record per filing with a link to the PDF
         await prisma.congressTrade.upsert({
           where: {
             politician_ticker_transactionDate_transactionType: {
-              politician: trade.politician,
-              ticker: trade.ticker,
-              transactionDate: new Date(trade.transactionDate),
-              transactionType: trade.type,
+              politician: filing.politician,
+              ticker: `PTR-${filing.docId}`,
+              transactionDate: new Date(filing.filingDate),
+              transactionType: "Periodic Transaction Report",
             },
           },
           update: {},
           create: {
-            chamber: "senate",
-            politician: trade.senator || `${trade.firstName} ${trade.lastName}`,
-            party: inferParty(trade.senator || `${trade.firstName} ${trade.lastName}`),
-            state: extractState(trade.office),
-            ticker: trade.ticker,
-            companyName: trade.assetDescription,
-            transactionType: trade.type,
-            amount: trade.amount,
-            transactionDate: new Date(trade.transactionDate),
-            filingDate: new Date(trade.dateRecieved),
-            assetType: trade.assetType,
-          },
-        });
-        inserted++;
-      } catch {
-        skipped++;
-      }
-    }
-
-    for (const trade of houseTrades) {
-      if (!trade.ticker) continue;
-      try {
-        await prisma.congressTrade.upsert({
-          where: {
-            politician_ticker_transactionDate_transactionType: {
-              politician:
-                trade.representative || `${trade.firstName} ${trade.lastName}`,
-              ticker: trade.ticker,
-              transactionDate: new Date(trade.transactionDate),
-              transactionType: trade.type,
-            },
-          },
-          update: {},
-          create: {
-            chamber: "house",
-            politician:
-              trade.representative || `${trade.firstName} ${trade.lastName}`,
-            party: inferParty(
-              trade.representative || `${trade.firstName} ${trade.lastName}`
-            ),
-            state: trade.district || null,
-            ticker: trade.ticker,
-            companyName: trade.assetDescription,
-            transactionType: trade.type,
-            amount: trade.amount,
-            transactionDate: new Date(trade.transactionDate),
-            filingDate: new Date(trade.dateRecieved),
-            assetType: null,
+            chamber: filing.chamber,
+            politician: filing.politician,
+            party: "Unknown",
+            state: filing.state,
+            ticker: `PTR-${filing.docId}`,
+            companyName: `Filing ${filing.docId}`,
+            transactionType: "Periodic Transaction Report",
+            amount: "See PDF",
+            transactionDate: new Date(filing.filingDate),
+            filingDate: new Date(filing.filingDate),
+            assetType: filing.pdfUrl,
           },
         });
         inserted++;
@@ -101,7 +57,7 @@ export async function POST(request: NextRequest) {
       success: true,
       inserted,
       skipped,
-      total: senateTrades.length + houseTrades.length,
+      total: filings.length,
     });
   } catch (error) {
     console.error("Cron fetch-trades failed:", error);
@@ -110,15 +66,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function inferParty(_name: string): string {
-  return "Unknown";
-}
-
-function extractState(office: string): string | null {
-  if (!office) return null;
-  const match = office.match(/\(([A-Z]{2})\)/);
-  return match ? match[1] : null;
 }

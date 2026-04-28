@@ -1,23 +1,21 @@
 import type { ResearchCardData, NewsItem } from "@/types";
-import * as fmp from "./fmp";
+import * as yahoo from "./yahoo";
 import * as eodhd from "./eodhd";
 import { prisma } from "./db";
 
 export async function getResearchData(
   ticker: string
 ): Promise<ResearchCardData> {
-  const [profile, quote, fmpNews, eodhdNews, historicalPrices, sentiment] =
+  const [profile, quote, eodhdNews, historicalPrices, sentiment] =
     await Promise.allSettled([
-      fmp.getCompanyProfile(ticker),
-      fmp.getStockQuote(ticker),
-      fmp.getCompanyNews(ticker, 5),
+      yahoo.getCompanyProfile(ticker),
+      yahoo.getStockQuote(ticker),
       eodhd.getCompanyNews(ticker, 10),
-      fmp.getHistoricalPrices(ticker, 30),
+      yahoo.getHistoricalPrices(ticker, 30),
       eodhd.getSentiment(ticker, 30),
     ]);
 
   const allNews = deduplicateNews([
-    ...(fmpNews.status === "fulfilled" ? fmpNews.value : []),
     ...(eodhdNews.status === "fulfilled" ? eodhdNews.value : []),
   ]);
 

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { getBiggestGainers, getBiggestLosers } from "@/lib/fmp";
+import { getTrendingStocks } from "@/lib/yahoo";
 
 function verifyCronSecret(request: NextRequest): boolean {
   const secret = request.headers.get("x-cron-secret");
@@ -13,10 +13,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const [gainers, losers] = await Promise.all([
-      getBiggestGainers(),
-      getBiggestLosers(),
-    ]);
+    const movers = await getTrendingStocks();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -24,7 +21,13 @@ export async function POST(request: NextRequest) {
     let inserted = 0;
     let skipped = 0;
 
-    for (const mover of gainers.slice(0, 20)) {
+    // Split into gainers and losers based on change
+    const gainers = movers.filter((m) => m.changePercent > 0)
+      .sort((a, b) => b.changePercent - a.changePercent);
+    const losers = movers.filter((m) => m.changePercent < 0)
+      .sort((a, b) => a.changePercent - b.changePercent);
+
+    for (const mover of gainers.slice(0, 10)) {
       try {
         await prisma.marketMover.upsert({
           where: {
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest) {
           update: {
             price: mover.price,
             change: mover.change,
-            changePercent: mover.changesPercentage,
+            changePercent: mover.changePercent,
           },
           create: {
             date: today,
@@ -45,7 +48,7 @@ export async function POST(request: NextRequest) {
             companyName: mover.name,
             price: mover.price,
             change: mover.change,
-            changePercent: mover.changesPercentage,
+            changePercent: mover.changePercent,
             type: "gainer",
           },
         });
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    for (const mover of losers.slice(0, 20)) {
+    for (const mover of losers.slice(0, 10)) {
       try {
         await prisma.marketMover.upsert({
           where: {
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest) {
           update: {
             price: mover.price,
             change: mover.change,
-            changePercent: mover.changesPercentage,
+            changePercent: mover.changePercent,
           },
           create: {
             date: today,
@@ -76,7 +79,7 @@ export async function POST(request: NextRequest) {
             companyName: mover.name,
             price: mover.price,
             change: mover.change,
-            changePercent: mover.changesPercentage,
+            changePercent: mover.changePercent,
             type: "loser",
           },
         });
