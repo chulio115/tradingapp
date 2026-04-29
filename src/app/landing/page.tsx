@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Activity, Landmark, TrendingUp, Bell, ArrowRight, Shield, Zap, Globe } from "lucide-react";
+import { Landmark, TrendingUp, Bell, Shield, Zap, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,14 +29,9 @@ export default function LandingPage() {
       <div className="container mx-auto px-4 py-16 md:py-24">
         <nav className="flex items-center justify-between mb-16">
           <div className="flex items-center gap-2">
-            <Activity className="h-8 w-8 text-emerald-500" />
+            <img src="/logo.svg" alt="Congress Tracker" className="h-8 w-8" />
             <span className="text-2xl font-bold text-white">Congress Tracker</span>
           </div>
-          <Link href="/login">
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-              Login
-            </Button>
-          </Link>
         </nav>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -52,20 +46,6 @@ export default function LandingPage() {
                 Verfolge die Finanztransaktionen von US-Politikern und bleibe über
                 die wichtigsten Marktveränderungen informiert – in Echtzeit.
               </p>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              <Link href="/login">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  Kostenlos starten
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/app">
-                <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                  Demo ansehen
-                </Button>
-              </Link>
             </div>
 
             {/* Features Grid */}

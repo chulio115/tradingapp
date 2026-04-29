@@ -26,7 +26,7 @@ function NavContent({ pathname }: { pathname: string }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-4 py-6 border-b border-border">
-        <Activity className="h-6 w-6 text-emerald-500" />
+        <img src="/logo.svg" alt="Congress Tracker" className="h-8 w-8" />
         <h1 className="text-lg font-bold tracking-tight">Congress Tracker</h1>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
