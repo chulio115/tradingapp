@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
 import PWARegister from "@/components/PWARegister";
 import "./globals.css";
 
@@ -51,10 +51,7 @@ export default function RootLayout({
       <body className="min-h-full flex">
         <TooltipProvider>
           <PWARegister />
-          <Sidebar />
-          <main className="flex-1 lg:pl-64 pt-14 lg:pt-0">
-            <div className="p-4 md:p-6 lg:p-8">{children}</div>
-          </main>
+          <AppShell>{children}</AppShell>
         </TooltipProvider>
       </body>
     </html>
