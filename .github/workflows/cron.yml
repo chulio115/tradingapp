@@ -11,7 +11,7 @@ on:
 
 jobs:
   refresh-market-data:
-    name: Refresh market movers and alerts
+    name: Refresh market movers
     runs-on: ubuntu-latest
     steps:
       - name: Fetch latest market movers
@@ -21,6 +21,11 @@ jobs:
             --header "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
             "${{ vars.APP_BASE_URL }}/api/cron/fetch-movers"
 
+  check-alerts:
+    name: Check alert rules
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
       - name: Check alert rules
         run: |
           curl --fail --show-error --silent \
