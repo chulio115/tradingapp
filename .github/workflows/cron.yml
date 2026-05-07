@@ -14,12 +14,22 @@ jobs:
     name: Refresh market movers
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
+
       - name: Fetch latest market movers
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          curl --fail --show-error --silent \
-            --request POST \
-            --header "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
-            "${{ vars.APP_BASE_URL }}/api/cron/fetch-movers"
+          npx --yes tsx scripts/fetch-movers.ts
 
   check-alerts:
     name: Check alert rules
@@ -38,9 +48,19 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 6 * * *'
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
+
       - name: Fetch latest congressional filings
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          curl --fail --show-error --silent \
-            --request POST \
-            --header "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
-            "${{ vars.APP_BASE_URL }}/api/cron/fetch-trades"
+          npx --yes tsx scripts/fetch-trades.ts
