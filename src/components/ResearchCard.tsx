@@ -9,6 +9,8 @@ import {
   Newspaper,
   MessageCircle,
   Landmark,
+  AlertTriangle,
+  Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -121,6 +123,67 @@ export default function ResearchCard({ ticker, tradeContext }: ResearchCardProps
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {data.moverInsight && (
+          <div
+            className={`rounded-lg border p-3 ${
+              data.moverInsight.signal === "watch"
+                ? "border-emerald-500/30 bg-emerald-500/10"
+                : data.moverInsight.signal === "caution"
+                  ? "border-amber-500/30 bg-amber-500/10"
+                  : "border-muted bg-muted/30"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {data.moverInsight.signal === "watch" ? (
+                    <Eye className="h-4 w-4 text-emerald-500" />
+                  ) : data.moverInsight.signal === "caution" ? (
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <h4 className="text-sm font-semibold">
+                    {data.moverInsight.label}
+                  </h4>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {data.moverInsight.summary}
+                </p>
+              </div>
+              <Badge variant="secondary" className="font-mono text-xs">
+                {data.moverInsight.score}/100
+              </Badge>
+            </div>
+
+            <div className="mt-3 grid gap-2 text-xs md:grid-cols-2">
+              <div>
+                <p className="font-medium text-muted-foreground">Katalysatoren</p>
+                <ul className="mt-1 space-y-0.5">
+                  {data.moverInsight.likelyCatalysts.slice(0, 3).map((item) => (
+                    <li key={item}>- {item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Handlungs-Hinweis</p>
+                <p className="mt-1 leading-relaxed">{data.moverInsight.actionHint}</p>
+              </div>
+            </div>
+
+            {data.moverInsight.riskFlags.length > 0 && (
+              <div className="mt-3 rounded-md bg-black/20 p-2 text-xs">
+                <p className="font-medium text-amber-300">Risiko-Flags</p>
+                <ul className="mt-1 space-y-0.5 text-amber-100/80">
+                  {data.moverInsight.riskFlags.map((flag) => (
+                    <li key={flag}>- {flag}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Price Chart */}
         {data.historicalPrices.length > 0 && (
           <div>

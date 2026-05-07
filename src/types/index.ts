@@ -116,7 +116,19 @@ export interface ResearchCardData {
   historicalPrices: HistoricalPrice[];
   sentiment: EODHDSentiment | null;
   congressTrades: CongressTrade[];
+  moverInsight?: MoverInsight | null;
   aiAnalysis?: string;
+}
+
+export interface MoverInsight {
+  signal: "watch" | "caution" | "noise";
+  direction: "bullish" | "bearish" | "neutral";
+  score: number;
+  label: string;
+  summary: string;
+  likelyCatalysts: string[];
+  riskFlags: string[];
+  actionHint: string;
 }
 
 export interface EODHDSentiment {

@@ -2,6 +2,7 @@ import type { ResearchCardData, NewsItem, CongressTrade } from "@/types";
 import * as yahoo from "./yahoo";
 import * as eodhd from "./eodhd";
 import { supabase } from "./supabase";
+import { buildMoverInsight } from "./mover-insight";
 
 export async function getResearchData(
   ticker: string
@@ -28,15 +29,26 @@ export async function getResearchData(
 
   const serializedTrades = (congressTrades ?? []) as CongressTrade[];
 
+  const quoteData = quote.status === "fulfilled" ? quote.value : null;
+  const historicalData =
+    historicalPrices.status === "fulfilled" ? historicalPrices.value : [];
+  const sentimentData =
+    sentiment.status === "fulfilled" ? sentiment.value : null;
+
   return {
     profile: profile.status === "fulfilled" ? profile.value : null,
-    quote: quote.status === "fulfilled" ? quote.value : null,
+    quote: quoteData,
     news: allNews.slice(0, 10),
-    historicalPrices:
-      historicalPrices.status === "fulfilled" ? historicalPrices.value : [],
-    sentiment:
-      sentiment.status === "fulfilled" ? sentiment.value : null,
+    historicalPrices: historicalData,
+    sentiment: sentimentData,
     congressTrades: serializedTrades as ResearchCardData["congressTrades"],
+    moverInsight: buildMoverInsight({
+      ticker,
+      quote: quoteData,
+      news: allNews,
+      historicalPrices: historicalData,
+      sentiment: sentimentData,
+    }),
   };
 }
 

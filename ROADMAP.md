@@ -52,12 +52,39 @@ Alle Umsetzungen priorisieren kostenlose, offizielle oder frei zugaengliche Date
 3. SEC/issuer press releases als spaeterer kostenloser Zusatz
 4. AI-Zusammenfassung nur gecached und optional, damit keine laufenden Kosten entstehen
 
+### Free Signal Scoring
+
+Market-Mover Signale werden zunaechst regelbasiert und kostenlos bewertet:
+
+- Tagesveraenderung in Prozent
+- Volume Spike gegen 30-Tage-Durchschnitt
+- News-Katalysatoren aus Titel/Summary
+- Sentiment-Staerke
+- Risiko-Keywords wie Offering, Dilution, Delisting, Bankruptcy
+- Preis-/Volatilitaetsrisiko bei sehr guenstigen Aktien
+
+Signal-Kategorien:
+
+- `Watchlist Signal`: Katalysator + Momentum + ausreichend Score
+- `Nur mit Vorsicht`: starke Bewegung, aber Risiko oder unklarer Katalysator
+- `Wahrscheinlich Noise`: keine klare Story, wenig Volumen-/News-Kontext
+
 ### Congress Data
 
 1. House Clerk XML/PDF als offizielle Quelle
 2. PDF-Text-Extraktion lokal/serverseitig mit kostenlosen Libraries
 3. Manuelle Fallback-Regeln fuer problematische PDF-Layouts
 4. Senate eFD Quelle spaeter als Erweiterung
+
+### Congress Large Buy Definition
+
+Bis echte PDF-Transaktionen extrahiert sind, koennen nur Filing-Metadaten angezeigt werden. Nach Phase 3 gelten als relevante/groessere Kaeufe:
+
+- Transaction Type enthaelt Purchase/Buy
+- Amount Range ab `$50,001 - $100,000` oder hoeher
+- Mehrere Kaeufe desselben Tickers innerhalb kurzer Zeit
+- Kauf in Sektoren mit aktuellen Market-Mover/News-Katalysatoren
+- Politiker mit positiver historischer 30/90/180-Tage Performance
 
 ## Phase 1 — Data Freshness Foundation
 
@@ -101,6 +128,7 @@ Goal: Bei jedem grossen Gewinner/Verlierer sieht man direkt, warum er sich beweg
   - crypto/commodity correlation
   - no clear catalyst
 - [ ] Optional AI-Fazit nur gecached und nur bei Bedarf generieren
+- [x] Erste kostenlose Signalbox mit Score, Katalysatoren, Risiko-Flags und Handlungshinweis
 
 ### Acceptance Criteria
 
