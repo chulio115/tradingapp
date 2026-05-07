@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { getTrendingStocks } from "@/lib/yahoo";
+import { getTrendingStocks, type YahooMover } from "@/lib/yahoo";
 
 function verifyCronSecret(request: NextRequest): boolean {
   const secret = request.headers.get("x-cron-secret");
@@ -20,27 +20,45 @@ export async function POST(request: NextRequest) {
 
     let inserted = 0;
     let skipped = 0;
+    const errors: string[] = [];
+
+    const validMovers = movers.filter((m) => {
+      const valid =
+        m.symbol &&
+        m.name &&
+        Number.isFinite(m.price) &&
+        Number.isFinite(m.change) &&
+        Number.isFinite(m.changePercent);
+
+      if (!valid) {
+        skipped++;
+        errors.push(`Invalid mover data for ${m.symbol || "unknown"}`);
+      }
+
+      return valid;
+    });
 
     // Split into gainers and losers based on change
-    const gainers = movers.filter((m) => m.changePercent > 0)
+    const gainers = validMovers.filter((m) => m.changePercent > 0)
       .sort((a, b) => b.changePercent - a.changePercent);
-    const losers = movers.filter((m) => m.changePercent < 0)
+    const losers = validMovers.filter((m) => m.changePercent < 0)
       .sort((a, b) => a.changePercent - b.changePercent);
 
-    for (const mover of gainers.slice(0, 10)) {
+    async function upsertMover(mover: YahooMover, type: "gainer" | "loser") {
       try {
         await prisma.marketMover.upsert({
           where: {
             date_ticker_type: {
               date: today,
               ticker: mover.symbol,
-              type: "gainer",
+              type,
             },
           },
           update: {
             price: mover.price,
             change: mover.change,
             changePercent: mover.changePercent,
+            volume: Number.isFinite(mover.volume) ? BigInt(Math.trunc(mover.volume)) : null,
           },
           create: {
             date: today,
@@ -49,44 +67,25 @@ export async function POST(request: NextRequest) {
             price: mover.price,
             change: mover.change,
             changePercent: mover.changePercent,
-            type: "gainer",
+            volume: Number.isFinite(mover.volume) ? BigInt(Math.trunc(mover.volume)) : null,
+            type,
           },
         });
         inserted++;
-      } catch {
+      } catch (error) {
         skipped++;
+        errors.push(
+          `${mover.symbol} (${type}): ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
+    for (const mover of gainers.slice(0, 10)) {
+      await upsertMover(mover, "gainer");
+    }
+
     for (const mover of losers.slice(0, 10)) {
-      try {
-        await prisma.marketMover.upsert({
-          where: {
-            date_ticker_type: {
-              date: today,
-              ticker: mover.symbol,
-              type: "loser",
-            },
-          },
-          update: {
-            price: mover.price,
-            change: mover.change,
-            changePercent: mover.changePercent,
-          },
-          create: {
-            date: today,
-            ticker: mover.symbol,
-            companyName: mover.name,
-            price: mover.price,
-            change: mover.change,
-            changePercent: mover.changePercent,
-            type: "loser",
-          },
-        });
-        inserted++;
-      } catch {
-        skipped++;
-      }
+      await upsertMover(mover, "loser");
     }
 
     return Response.json({
@@ -95,6 +94,7 @@ export async function POST(request: NextRequest) {
       skipped,
       gainersCount: gainers.length,
       losersCount: losers.length,
+      errors: errors.slice(0, 10),
     });
   } catch (error) {
     console.error("Cron fetch-movers failed:", error);
