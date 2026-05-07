@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 import { fetchHouseFilings } from "../src/lib/congress-scraper";
 
 function createSupabaseClient() {
@@ -30,6 +31,7 @@ async function main() {
         .single();
 
       const record = {
+        id: randomUUID(),
         chamber: filing.chamber,
         politician: filing.politician,
         party: "Unknown",

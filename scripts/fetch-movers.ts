@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 import { getTrendingStocks, type YahooMover } from "../src/lib/yahoo";
 
 function createSupabaseClient() {
@@ -55,6 +56,7 @@ async function main() {
         .single();
 
       const record = {
+        id: randomUUID(),
         date: today.toISOString(),
         ticker: mover.symbol,
         companyName: mover.name,
