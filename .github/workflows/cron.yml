@@ -27,7 +27,8 @@ jobs:
 
       - name: Fetch latest market movers
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           npx --yes tsx scripts/fetch-movers.ts
 
@@ -61,6 +62,7 @@ jobs:
 
       - name: Fetch latest congressional filings
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           npx --yes tsx scripts/fetch-trades.ts

@@ -1,17 +1,17 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { createClient } from "@supabase/supabase-js";
 import { getTrendingStocks, type YahooMover } from "../src/lib/yahoo";
 
-function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error("DATABASE_URL is not set");
-  const adapter = new PrismaPg({ connectionString });
-  return new PrismaClient({ adapter }) as unknown as PrismaClient;
+function createSupabaseClient() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url) throw new Error("SUPABASE_URL is not set");
+  if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
+  return createClient(url, key);
 }
 
 async function main() {
-  const prisma = createPrismaClient();
+  const supabase = createSupabaseClient();
   const movers = await getTrendingStocks();
 
   const today = new Date();
@@ -46,42 +46,50 @@ async function main() {
 
   async function upsertMover(mover: YahooMover, type: "gainer" | "loser") {
     try {
-      await prisma.marketMover.upsert({
-        where: {
-          date_ticker_type: {
-            date: today,
-            ticker: mover.symbol,
-            type,
-          },
-        },
-        update: {
-          price: mover.price,
-          change: mover.change,
-          changePercent: mover.changePercent,
-          volume: Number.isFinite(mover.volume) ? BigInt(Math.trunc(mover.volume)) : null,
-        },
-        create: {
-          date: today,
-          ticker: mover.symbol,
-          companyName: mover.name,
-          price: mover.price,
-          change: mover.change,
-          changePercent: mover.changePercent,
-          volume: Number.isFinite(mover.volume) ? BigInt(Math.trunc(mover.volume)) : null,
-          type,
-        },
-      });
+      const { data: existing } = await supabase
+        .from("MarketMover")
+        .select("id")
+        .eq("date", today.toISOString())
+        .eq("ticker", mover.symbol)
+        .eq("type", type)
+        .single();
+
+      const record = {
+        date: today.toISOString(),
+        ticker: mover.symbol,
+        companyName: mover.name,
+        price: mover.price,
+        change: mover.change,
+        changePercent: mover.changePercent,
+        volume: Number.isFinite(mover.volume) ? Math.trunc(mover.volume) : null,
+        type,
+      };
+
+      let error;
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from("MarketMover")
+          .update(record)
+          .eq("id", existing.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("MarketMover")
+          .insert(record);
+        error = insertError;
+      }
+
+      if (error) throw error;
       inserted++;
     } catch (error) {
       skipped++;
-      errors.push(`${mover.symbol} (${type}): ${error instanceof Error ? error.message : String(error)}`);
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      errors.push(`${mover.symbol} (${type}): ${errorMsg}`);
     }
   }
 
   for (const mover of gainers.slice(0, 10)) await upsertMover(mover, "gainer");
   for (const mover of losers.slice(0, 10)) await upsertMover(mover, "loser");
-
-  await prisma.$disconnect();
 
   const result = {
     success: true,
