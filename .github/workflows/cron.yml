@@ -1,0 +1,41 @@
+name: Congress Tracker Cron
+
+on:
+  schedule:
+    # Market data refresh during broad US market hours, Monday-Friday.
+    # GitHub Actions cron uses UTC.
+    - cron: "*/30 13-22 * * 1-5"
+    # Daily filings refresh after House Clerk data is typically available.
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh-market-data:
+    name: Refresh market movers and alerts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest market movers
+        run: |
+          curl --fail --show-error --silent \
+            --request POST \
+            --header "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.APP_BASE_URL }}/api/cron/fetch-movers"
+
+      - name: Check alert rules
+        run: |
+          curl --fail --show-error --silent \
+            --request POST \
+            --header "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.APP_BASE_URL }}/api/cron/check-alerts"
+
+  refresh-congress-filings:
+    name: Refresh congressional filings
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 6 * * *'
+    steps:
+      - name: Fetch latest congressional filings
+        run: |
+          curl --fail --show-error --silent \
+            --request POST \
+            --header "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.APP_BASE_URL }}/api/cron/fetch-trades"

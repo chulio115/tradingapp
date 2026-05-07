@@ -1,17 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, RefreshCw, AlertTriangle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import MoverCard from "@/components/MoverCard";
 import AuthWrapper from "@/components/AuthWrapper";
 import type { MarketMover } from "@/types";
 
+interface MoversResponse {
+  movers: MarketMover[];
+  asOf: string | null;
+  isStale: boolean;
+  staleThresholdHours: number;
+}
+
 function MoversPageContent() {
   const [gainers, setGainers] = useState<MarketMover[]>([]);
   const [losers, setLosers] = useState<MarketMover[]>([]);
   const [loading, setLoading] = useState(true);
+  const [asOf, setAsOf] = useState<string | null>(null);
+  const [isStale, setIsStale] = useState(false);
 
   const fetchMovers = async () => {
     setLoading(true);
@@ -22,12 +31,16 @@ function MoversPageContent() {
       ]);
 
       if (gainersRes.ok) {
-        const data = await gainersRes.json();
+        const data = (await gainersRes.json()) as MoversResponse;
         setGainers(data.movers);
+        setAsOf(data.asOf);
+        setIsStale(data.isStale);
       }
       if (losersRes.ok) {
-        const data = await losersRes.json();
+        const data = (await losersRes.json()) as MoversResponse;
         setLosers(data.movers);
+        setAsOf((current) => current ?? data.asOf);
+        setIsStale((current) => current || data.isStale);
       }
     } catch (error) {
       console.error("Failed to fetch movers:", error);
@@ -48,6 +61,14 @@ function MoversPageContent() {
           <p className="text-sm text-muted-foreground mt-1">
             Biggest Gainers & Losers des Tages
           </p>
+          {asOf && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              <span>
+                Datenstand: {new Date(asOf).toLocaleString("de-DE")}
+              </span>
+            </div>
+          )}
         </div>
         <Button
           variant="outline"
@@ -61,6 +82,19 @@ function MoversPageContent() {
           Aktualisieren
         </Button>
       </div>
+
+      {isStale && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-medium">Market-Mover-Daten sind wahrscheinlich veraltet.</p>
+            <p className="mt-1 text-amber-200/80">
+              Der automatische Cron sollte neue Werte laden. Wenn diese Warnung bleibt,
+              pruefen wir GitHub Actions/CRON_SECRET.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Gainers */}

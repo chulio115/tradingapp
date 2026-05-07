@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Congress Tracker
 
-## Getting Started
+Congress Tracker ist ein privates Research- und Signal-Dashboard fuer Congressional Filings, Market Movers, News/Sentiment und Telegram Alerts.
 
-First, run the development server:
+## Vision
+
+Die App soll taeglich nutzbare Finanzsignale liefern:
+
+- aktuelle Gewinner und Verlierer am Markt
+- erklaerbare Gruende fuer starke Kursbewegungen
+- echte Congressional Transactions aus offiziellen Filings
+- Politiker-Performance und Best Moves
+- Telegram Alerts und Daily Briefings
+
+Die Roadmap steht in [`ROADMAP.md`](./ROADMAP.md).
+
+## Stack
+
+- Next.js App Router
+- TypeScript
+- Tailwind CSS v4
+- Supabase PostgreSQL + Auth + RLS
+- Prisma fuer serverseitige Cron-Writes
+- Supabase REST fuer API-Reads
+- Yahoo Finance als kostenlose Market-Data-Basis
+- House Clerk Filings als offizielle Congress-Quelle
+- EODHD fuer News/Sentiment
+- Telegram Bot fuer Alerts
+- Netlify Deployment
+
+## Datenquellen
+
+### Kostenlos / bevorzugt
+
+- House Clerk Financial Disclosure XML/PDF
+- Yahoo Finance Chart API
+- Yahoo Finance Trending API
+- EODHD News/Sentiment Free Tier
+- GitHub Actions Cron fuer geplante Jobs
+
+### Prinzip
+
+Kostenpflichtige Datenanbieter werden nur genutzt oder empfohlen, wenn kostenlose Quellen fachlich nicht ausreichen.
+
+## Lokale Entwicklung
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App lokal oeffnen:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```txt
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment Variables
 
-## Learn More
+Die App benoetigt serverseitige Secrets. Keine Secrets im Code committen.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+DATABASE_URL=
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+EODHD_API_KEY=
+CRON_SECRET=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Optional:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+ANTHROPIC_API_KEY=
+```
 
-## Deploy on Vercel
+AI-Funktionen muessen gecached und sparsam genutzt werden.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Datenpipeline
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Cron Endpoints
+
+- `POST /api/cron/fetch-movers`
+- `POST /api/cron/fetch-trades`
+- `POST /api/cron/check-alerts`
+
+Alle Cron Endpoints sind mit `x-cron-secret` geschuetzt.
+
+### GitHub Actions Cron
+
+Die kostenlose Cron-Ausfuehrung liegt in `.github/workflows/cron.yml`.
+
+Im GitHub Repository muessen gesetzt sein:
+
+- Repository Secret `CRON_SECRET` = gleicher Wert wie in Netlify
+- Repository Variable `APP_BASE_URL` = `https://financemarket.netlify.app`
+
+Der Workflow kann auch manuell ueber `workflow_dispatch` gestartet werden.
+
+### Architektur
+
+- Prisma schreibt serverseitig direkt in Supabase PostgreSQL
+- Supabase REST liest Daten fuer API Routes
+- RLS ist aktiviert; anon/authenticated Rollen duerfen aktuell nur lesen
+- Mutationen laufen nicht direkt aus dem Browser
+
+## Deployment
+
+Production:
+
+```txt
+https://financemarket.netlify.app
+```
+
+Build testen:
+
+```bash
+npm run build
+```
+
+Deploy erfolgt ueber Netlify.
+
+## Roadmap Kurzfassung
+
+1. Datenfrische stabilisieren
+2. Market Mover Insights bauen
+3. Echte Congressional Transactions aus PDFs extrahieren
+4. Politician Performance und Best Moves entwickeln
+5. Daily Briefing und Telegram Digest bauen
+
+Details: [`ROADMAP.md`](./ROADMAP.md)
